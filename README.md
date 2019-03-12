@@ -56,6 +56,10 @@ Start your database server, then application:
 nodejs index.js
 ```
 
+# Example logged data
+I highly recommend using grafana to create graphs.
+<img src="screenshots/grafana.png" width="600">
+
 ## Credits
 * [bartekn](https://github.com/bartekn) for initial idea.
 * [aholstenson](https://github.com/aholstenson) for miio library.
