@@ -58,3 +58,4 @@ nodejs index.js
 
 ## Credits
 * [bartekn](https://github.com/bartekn) for initial idea.
+* [aholstenson](https://github.com/aholstenson) for miio library.
