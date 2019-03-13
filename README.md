@@ -58,7 +58,7 @@ nodejs index.js
 
 # Example logged data
 I highly recommend using grafana to create graphs.
-<img src="screenshots/grafana.png" width="600">
+<img src="screenshots/grafana.PNG" width="600">
 
 ## Credits
 * [bartekn](https://github.com/bartekn) for initial idea.
