@@ -21,6 +21,9 @@ const airlyApiKey = "";
 const latitude = "50.1";
 const longitude = "20.0";
 
+const unconditionalBoost = true;
+const unconditionalBoostLevel = 1;
+
 const dayEnableCoolingDown = true;
 const dayCoolingDownThreshold = 26.5;
 const dayCoolingDownSpeed = 2;
@@ -107,6 +110,10 @@ async function getData() {
         if (disableLedAtNight) {
             await device.led(1);
         }
+    }
+
+    if (unconditionalBoost) {
+        newLevel += unconditionalBoostLevel;
     }
 
     if (preventLowHumidity && (humidity < lowHumidityThreshold) && newLevel > 1) {
