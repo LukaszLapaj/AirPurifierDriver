@@ -8,7 +8,14 @@ const databaseName = "home";
 const login = "postgres";
 const password = "";
 
-sequelize = new Sequelize("postgresql://" + login + ":" + password + "@" + host + ":" + port + "/" + databaseName + "?ssl=false");
+try{
+    sequelize = new Sequelize("postgresql://" + login + ":" + password + "@" + host + ":" + port + "/" + databaseName + "?ssl=false", {
+        logging: false,
+        idleTimeoutMillis: 10000
+    });
+} catch (e) {
+    console.log("Database connection error");
+}
 
 export const Air = sequelize.define('air', {
     date: {
