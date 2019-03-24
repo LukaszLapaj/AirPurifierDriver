@@ -30,6 +30,7 @@ const nightCoolingDownSpeed = 1;
 
 const preventLowHumidity = true;
 const lowHumidityThreshold = 30;
+const criticalHumidityThreshold = 24;
 
 getData();
 setInterval(() => getData(), purifierUpdateFrequency * 1000);
@@ -110,6 +111,10 @@ async function getData() {
 
     if (preventLowHumidity && (humidity < lowHumidityThreshold) && newLevel > 1) {
         newLevel -= 1;
+    }
+
+    if (preventLowHumidity && (humidity < criticalHumidityThreshold)) {
+        newLevel = 0;
     }
 
     if (overridePurifierMode) {
