@@ -24,6 +24,10 @@ const longitude = "20.0";
 const unconditionalBoost = true;
 const unconditionalBoostLevel = 1;
 
+const preventLowTemperature = true;
+const preventLowTemperatureThreshold = 25.0;
+const preventLowTemperatureSpeed = 0;
+
 const dayEnableCoolingDown = true;
 const dayCoolingDownThreshold = 26.5;
 const dayCoolingDownSpeed = 2;
@@ -122,6 +126,10 @@ async function getData() {
 
     if (preventLowHumidity && (humidity < criticalHumidityThreshold)) {
         newLevel = 0;
+    }
+
+    if (preventLowTemperature && (temperature.value < preventLowTemperatureThreshold)) {
+        newLevel = preventLowTemperatureSpeed;
     }
 
     if (overridePurifierMode) {
