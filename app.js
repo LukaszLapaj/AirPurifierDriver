@@ -164,29 +164,39 @@ async function getData() {
 }
 
 async function getAirlyData() {
-    let airlyData = await axios.get(
-        "https://airapi.airly.eu/v2/measurements/point?" + "lat=" + latitude.toString() + "&lng=" + longitude.toString(),
-        {headers: {'apikey': airlyApiKey}, timeout: 1500},
-    );
-
     try {
-        let fromDateTime = new Date(airlyData.data.current.fromDateTime);
-        let tillDateTime = new Date(airlyData.data.current.fromDateTime);
+        let airlyData = await axios.get(
+            "https://airapi.airly.eu/v2/measurements/point?" + "lat=" + latitude.toString() + "&lng=" + longitude.toString(),
+            {headers: {'apikey': airlyApiKey}, timeout: 1500},
+        );
+        try {
+            let fromDateTime = new Date(airlyData.data.current.fromDateTime);
+            let tillDateTime = new Date(airlyData.data.current.fromDateTime);
 
-        let values = airlyData.data.current.values;
+            let values = airlyData.data.current.values;
 
-        const date = new Date();
+            const date = new Date();
 
-        const temperature = _.find(values, {name: 'TEMPERATURE'}).value;
-        const humidity = _.find(values, {name: 'HUMIDITY'}).value;
-        const pressure = _.find(values, {name: 'PRESSURE'}).value;
-        const pm25 = _.find(values, {name: 'PM25'}).value;
-        const pm10 = _.find(values, {name: 'PM10'}).value;
-        const pm1 = _.find(values, {name: 'PM1'}).value;
+            const temperature = _.find(values, {name: 'TEMPERATURE'}).value;
+            const humidity = _.find(values, {name: 'HUMIDITY'}).value;
+            const pressure = _.find(values, {name: 'PRESSURE'}).value;
+            const pm25 = _.find(values, {name: 'PM25'}).value;
+            const pm10 = _.find(values, {name: 'PM10'}).value;
+            const pm1 = _.find(values, {name: 'PM1'}).value;
 
-        let data = {date, temperature, humidity, pressure, pm25, pm10, pm1};
-        await db.Airly.create(data);
+            let data = {date, temperature, humidity, pressure, pm25, pm10, pm1};
+
+            if(databaseLogging) {
+                try {
+                    await db.Airly.create(data);
+                } catch (e) {
+                    console.log("Database insert error");
+                }
+            }
+        } catch (e) {
+            console.log("Airly parsing error");
+        }
     } catch (e) {
-        console.log(e);
+        console.log("Airly Timeout");
     }
 }
