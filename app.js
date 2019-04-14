@@ -12,8 +12,8 @@ let lowerLoggingFrequency = true;
 
 const enableNightMode = true;
 const disableLedAtNight = true;
-const nightBeginning = new Date().setHours(22, 30);
-const nightEnd = new Date().setHours(6, 30);
+const dayStart = moment('6:30', "HH:mm");
+const dayEnd = moment('22:30', "HH:mm");
 
 const enableAirly = true;
 const airlyUpdateFrequency = 90;
@@ -88,7 +88,9 @@ async function getData() {
 
     let newLevel = 0;
 
-    if ((date > nightBeginning || date < nightEnd) && enableNightMode) {
+    let night = !moment().isBetween(dayStart, dayEnd);
+
+    if (night && enableNightMode) {
         for (let key in nightLevels) {
             if (pm25 >= nightLevels[key].pm25) {
                 newLevel = nightLevels[key].level;
