@@ -5,6 +5,8 @@ import * as db from './db.js';
 import "@babel/polyfill";
 
 const airPurifierIP = '192.168.0.2';
+const moment = require('moment');
+
 const overridePurifierMode = true;
 const purifierUpdateFrequency = 30;
 const databaseLogging = true;
@@ -12,8 +14,8 @@ let lowerLoggingFrequency = true;
 
 const enableNightMode = true;
 const disableLedAtNight = true;
-const dayStart = moment('6:30', "HH:mm");
-const dayEnd = moment('22:30', "HH:mm");
+const dayStart = "6:30";
+const dayEnd = "22:30";
 
 const enableAirly = true;
 const airlyUpdateFrequency = 90;
@@ -88,7 +90,7 @@ async function getData() {
 
     let newLevel = 0;
 
-    let night = !moment().isBetween(dayStart, dayEnd);
+    let night = !moment().isBetween(new moment(dayStart, "HH:mm"), new moment(dayEnd, "HH:mm"));
 
     if (night && enableNightMode) {
         for (let key in nightLevels) {
