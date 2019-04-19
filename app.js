@@ -101,7 +101,7 @@ async function getData() {
                 break;
             }
         }
-        if (nightEnableCoolingDown && (temperature.value > nightCoolingDownThreshold) && 16 > newLevel + nightCoolingDownSpeed) {
+        if (nightEnableCoolingDown && (temperature.value >= nightCoolingDownThreshold) && 16 > newLevel + nightCoolingDownSpeed) {
             newLevel += nightCoolingDownSpeed;
             debug += " nightEnableCoolingDown: " + nightEnableCoolingDown;
         }
@@ -116,7 +116,7 @@ async function getData() {
                 break;
             }
         }
-        if (dayEnableCoolingDown && (temperature.value > dayCoolingDownThreshold) && 16 > newLevel + dayCoolingDownSpeed) {
+        if (dayEnableCoolingDown && (temperature.value >= dayCoolingDownThreshold) && 16 > newLevel + dayCoolingDownSpeed) {
             newLevel += dayCoolingDownSpeed;
             debug += " dayEnableCoolingDown: " + dayEnableCoolingDown;
         }
@@ -130,18 +130,18 @@ async function getData() {
         debug += " unconditionalBoostLevel: " + unconditionalBoostLevel;
     }
 
-    if (preventLowHumidity && (humidity < lowHumidityThreshold) && newLevel > 1) {
+    if (preventLowHumidity && (humidity <= lowHumidityThreshold) && newLevel >= 1) {
         newLevel -= 1;
         debug += " preventLowHumidity: " + preventLowHumidity;
     }
 
-    if (preventLowHumidity && (humidity < criticalHumidityThreshold)) {
-        newLevel = 0;
+    if (preventLowTemperature && (temperature.value <= preventLowTemperatureThreshold)) {
+        newLevel = preventLowTemperatureSpeed;
         debug += " preventLowTemperature: " + preventLowTemperature;
     }
 
-    if (preventLowTemperature && (temperature.value < preventLowTemperatureThreshold)) {
-        newLevel = preventLowTemperatureSpeed;
+    if (preventLowHumidity && (humidity <= criticalHumidityThreshold)) {
+        newLevel = 0;
         debug += " criticalHumidityThreshold: " + preventLowHumidity;
     }
 
