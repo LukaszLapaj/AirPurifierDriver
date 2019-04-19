@@ -1,10 +1,13 @@
-# Xiaomi Air Purifier 2S Driver
-An improved driver for Xiaomi Air Purifier 2S automation.
+# Xiaomi Air Purifier 2/2S Driver
+An improved driver for Xiaomi Air Purifier 2/2S automation.
 
 # Features:
 - Day/Night mode
-- Cooling mode
-- Low humidity protection
+- Day/Night cooling
+- Unconditional speed boost
+- Low/Critical humidity protection
+- Low temperature protection
+- Highly customisable speed
 - Database logger
 - Airly logger
 
