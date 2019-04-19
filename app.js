@@ -91,8 +91,10 @@ async function getData() {
     let newLevel = 0;
 
     let night = !moment().isBetween(new moment(dayStart, "HH:mm"), new moment(dayEnd, "HH:mm"));
+    let debug = "time: " +  date.toLocaleTimeString() + " pm2.5: " + parseInt(pm25).toLocaleString('en-US', {minimumIntegerDigits: 3}) + " level: " + level + " humidity: " + humidity + " temperature: " + parseFloat(temperature).toFixed(1);
 
     if (night && enableNightMode) {
+        debug += " night: " + night;
         for (let key in nightLevels) {
             if (pm25 >= nightLevels[key].pm25) {
                 newLevel = nightLevels[key].level;
@@ -101,9 +103,11 @@ async function getData() {
         }
         if (nightEnableCoolingDown && (temperature.value > nightCoolingDownThreshold) && 16 > newLevel + nightCoolingDownSpeed) {
             newLevel += nightCoolingDownSpeed;
+            debug += " nightEnableCoolingDown: " + nightEnableCoolingDown;
         }
         if (disableLedAtNight) {
             await device.led(0);
+            debug += " disableLedAtNight: " + disableLedAtNight;
         }
     } else {
         for (let key in dayLevels) {
@@ -114,6 +118,7 @@ async function getData() {
         }
         if (dayEnableCoolingDown && (temperature.value > dayCoolingDownThreshold) && 16 > newLevel + dayCoolingDownSpeed) {
             newLevel += dayCoolingDownSpeed;
+            debug += " dayEnableCoolingDown: " + dayEnableCoolingDown;
         }
         if (disableLedAtNight) {
             await device.led(1);
@@ -122,18 +127,22 @@ async function getData() {
 
     if (unconditionalBoost) {
         newLevel += unconditionalBoostLevel;
+        debug += " unconditionalBoostLevel: " + unconditionalBoostLevel;
     }
 
     if (preventLowHumidity && (humidity < lowHumidityThreshold) && newLevel > 1) {
         newLevel -= 1;
+        debug += " preventLowHumidity: " + preventLowHumidity;
     }
 
     if (preventLowHumidity && (humidity < criticalHumidityThreshold)) {
         newLevel = 0;
+        debug += " preventLowTemperature: " + preventLowTemperature;
     }
 
     if (preventLowTemperature && (temperature.value < preventLowTemperatureThreshold)) {
         newLevel = preventLowTemperatureSpeed;
+        debug += " criticalHumidityThreshold: " + preventLowHumidity;
     }
 
     if (overridePurifierMode) {
@@ -158,11 +167,17 @@ async function getData() {
     if (lowerLoggingFrequency && databaseLogging) {
         let data = {date, temperature: temperature.value, humidity, pm25, mode};
         data.level = level;
-        await db.Air.create(data);
+        try {
+            await db.Air.create(data);
+        } catch (e) {
+            console.log("Database insert error");
+        }
         lowerLoggingFrequency = false;
     } else {
         lowerLoggingFrequency = true;
     }
+
+    console.log("{ " + debug  + " }");
 
     device.destroy();
 }
