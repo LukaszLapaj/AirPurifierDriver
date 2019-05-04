@@ -13,7 +13,7 @@ An improved driver for Xiaomi Air Purifier 2/2S automation.
 
 # Requirements
 - Postgres SQL Server
-- Node.js
+- Node.js 12.1+
 - Yarn
 
 # Install
@@ -23,7 +23,7 @@ npm install
 ```
 
 # Configuration
-Go to `app.js` and set necessary flags:
+Go to `app.mjs` and set necessary flags:
 ```
 const airPurifierIP = 'AIR PURIFIER IP ADDRESS';
 ```
@@ -37,7 +37,7 @@ Or disable it by setting:
 ```
 const enableAirly = false;
 ```
-Setup database connection `db.js`. All necessary fields will be created automaticaly.
+Setup database connection `db.mjs`. All necessary fields will be created automaticaly.
 ```
 const host = "localhost";
 const port = "5432";
@@ -45,9 +45,9 @@ const databaseName = "home";
 const login = "postgres";
 const password = "";
 ```
-If You won't be using database, remove this import in `app.js` and set logging flag to false:
+If You won't be using database, remove this import in `app.mjs` and set logging flag to false:
 ```
-import * as db from './db.js';
+import * as db from './db.mjs';
 ```
 ```
 const databaseLogging = false;
@@ -56,7 +56,7 @@ const databaseLogging = false;
 # Running the driver
 Start your database server, then application:
 ```
-nodejs index.js
+nodejs --experimental-modules index.js
 ```
 
 # Example logged data

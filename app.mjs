@@ -1,7 +1,7 @@
 import miio from 'miio';
 import _ from 'lodash';
 import axios from 'axios';
-import * as db from './db.js';
+import * as db from './db.mjs';
 import "@babel/polyfill";
 
 const airPurifierIP = '192.168.0.2';
