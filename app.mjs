@@ -4,7 +4,8 @@ import axios from 'axios';
 import * as db from './db.mjs';
 
 const airPurifierIP = '192.168.0.2';
-const moment = require('moment');
+import moment from 'moment';
+import SunCalc from 'suncalc';
 
 const overridePurifierMode = true;
 const purifierUpdateFrequency = 30;
@@ -17,10 +18,10 @@ const dayStart = "6:30";
 const dayEnd = "22:30";
 
 const enableAirly = true;
-const airlyUpdateFrequency = 90;
 const airlyApiKey = "";
 const latitude = "50.1";
 const longitude = "20.0";
+const airlyUpdateFrequency = 60;
 
 const unconditionalBoost = true;
 const unconditionalBoostLevel = 1;
@@ -85,6 +86,8 @@ async function getData() {
     const temperature = await device.temperature();
     const humidity = await device.relativeHumidity();
     const level = await device.favoriteLevel();
+    const led = await device.led();
+    let power = await device.power();
     let mode = await device.mode();
 
     let newLevel = 0;
@@ -93,7 +96,7 @@ async function getData() {
     let debug = "time: " +  date.toLocaleTimeString() + " pm2.5: " + parseInt(pm25).toLocaleString('en-US', {minimumIntegerDigits: 3}) + " level: " + level + " humidity: " + humidity + " temperature: " + parseFloat(temperature).toFixed(1);
 
     if (night && enableNightMode) {
-        debug += " night: " + night;
+        debug += " nightMode: " + night;
         for (let key in nightLevels) {
             if (pm25 >= nightLevels[key].pm25) {
                 newLevel = nightLevels[key].level;
@@ -204,7 +207,7 @@ async function getAirlyData() {
 
             let data = {date, temperature, humidity, pressure, pm25, pm10, pm1};
 
-            if(databaseLogging) {
+            if (databaseLogging) {
                 try {
                     await db.Airly.create(data);
                 } catch (e) {

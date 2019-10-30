@@ -56,7 +56,7 @@ const databaseLogging = false;
 # Running the driver
 Start your database server, then application:
 ```
-nodejs --experimental-modules index.js
+nodejs --experimental-modules index.mjs
 ```
 
 # Example logged data

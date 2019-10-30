@@ -6,15 +6,13 @@
   "author": "Lukasz Lapaj",
   "license": "MIT",
   "dependencies": {
-    "@babel/core": "^7.3.4",
-    "@babel/polyfill": "^7.2.5",
-    "@babel/preset-env": "^7.3.4",
-    "@babel/register": "^7.0.0",
-    "axios": "^0.18.0",
-    "lodash": "^4.17.11",
-    "miio": "git+https://github.com/LukaszLapaj/miio#master",
+    "axios": "^0.18.1",
+    "gulp": "^4.0.2",
+    "lodash": "^4.17.15",
+    "miio": "git+https://github.com/LukaszLapaj/miio.git#master",
     "moment": "^2.24.0",
-    "pg": "^7.8.2",
-    "sequelize": "^4.43.0"
+    "pg": "^7.12.1",
+    "sequelize": "4.44.2",
+    "suncalc": "^1.8.0"
   }
 }
