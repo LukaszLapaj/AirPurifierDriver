@@ -2,11 +2,10 @@ import miio from 'miio';
 import _ from 'lodash';
 import axios from 'axios';
 import * as db from './db.mjs';
-
-const airPurifierIP = '192.168.0.2';
 import moment from 'moment';
 import SunCalc from 'suncalc';
 
+const airPurifierIP = '192.168.0.2';
 const overridePurifierMode = true;
 const purifierUpdateFrequency = 30;
 const databaseLogging = true;
@@ -14,17 +13,18 @@ let lowerLoggingFrequency = true;
 
 const enableNightMode = true;
 const disableLedAtNight = true;
-const dayStart = "6:30";
-const dayEnd = "22:30";
+const locationBased = false;
+let dayStart = "6:30";
+let dayEnd = "22:30";
 
 const enableAirly = true;
+const airlyUpdateFrequency = 60;
 const airlyApiKey = "";
 const latitude = "50.1";
 const longitude = "20.0";
-const airlyUpdateFrequency = 60;
 
-const unconditionalBoost = true;
-const unconditionalBoostLevel = 1;
+const unconditionalBoost = false;
+const unconditionalBoostLevel = 0;
 
 const preventLowTemperature = true;
 const preventLowTemperatureThreshold = 25.0;
@@ -33,6 +33,7 @@ const preventLowTemperatureSpeed = 0;
 const dayEnableCoolingDown = true;
 const dayCoolingDownThreshold = 26.5;
 const dayCoolingDownSpeed = 2;
+
 const nightEnableCoolingDown = true;
 const nightCoolingDownThreshold = 27.5;
 const nightCoolingDownSpeed = 1;
@@ -40,6 +41,8 @@ const nightCoolingDownSpeed = 1;
 const preventLowHumidity = true;
 const lowHumidityThreshold = 30;
 const criticalHumidityThreshold = 24;
+
+let night, times;
 
 getData();
 setInterval(() => getData(), purifierUpdateFrequency * 1000);
@@ -81,6 +84,15 @@ const nightLevels = [
 
 async function getData() {
     const date = new Date();
+    times = SunCalc.getTimes(new Date(), latitude, longitude);
+    if (!locationBased) {
+        night = !moment().isBetween(new moment(dayStart, "HH:mm"), new moment(dayEnd, "HH:mm"));
+    } else {
+        dayStart = new moment(times.sunriseEnd.getHours() + ':' + times.sunriseEnd.getMinutes(), "HH:mm");
+        dayEnd = isNaN(times.night) ? new moment("23:59", "HH:mm") : new moment(times.night.getHours() + ':' + times.night.getMinutes(), "HH:mm");
+        night = !moment().isBetween(dayStart, dayEnd);
+    }
+
     const device = await miio.device({address: airPurifierIP});
     const pm25 = await device.pm2_5();
     const temperature = await device.temperature();
@@ -91,9 +103,7 @@ async function getData() {
     let mode = await device.mode();
 
     let newLevel = 0;
-
-    let night = !moment().isBetween(new moment(dayStart, "HH:mm"), new moment(dayEnd, "HH:mm"));
-    let debug = "time: " +  date.toLocaleTimeString() + " pm2.5: " + parseInt(pm25).toLocaleString('en-US', {minimumIntegerDigits: 3}) + " level: " + level + " humidity: " + humidity + " temperature: " + parseFloat(temperature).toFixed(1);
+    let debug = "time: " + date.toLocaleTimeString() + " pm2.5: " + parseInt(pm25).toLocaleString('en-US', {minimumIntegerDigits: 3}) + " level: " + level + " humidity: " + humidity + " temperature: " + parseFloat(temperature).toFixed(1);
 
     if (night && enableNightMode) {
         debug += " nightMode: " + night;
@@ -179,7 +189,7 @@ async function getData() {
         lowerLoggingFrequency = true;
     }
 
-    console.log("{ " + debug  + " }");
+    console.log("{ " + debug + " }");
 
     device.destroy();
 }
