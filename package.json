@@ -1,12 +1,12 @@
 {
   "name": "AirPurifierDriver",
-  "version": "2.1.0",
+  "version": "3.0.0",
   "private": true,
   "main": "index.js",
   "author": "Lukasz Lapaj",
   "license": "MIT",
   "dependencies": {
-    "axios": "^0.18.1",
+    "axios": "^0.19.0",
     "gulp": "^4.0.2",
     "lodash": "^4.17.15",
     "miio": "git+https://github.com/LukaszLapaj/miio.git#master",
