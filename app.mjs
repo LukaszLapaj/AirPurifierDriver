@@ -8,7 +8,7 @@ import SunCalc from 'suncalc';
 let config = {
     airPurifierIP: '192.168.0.2',
     overridePurifierMode: true,
-    purifierUpdateFrequency: 30,
+    purifierUpdateFrequency: 15,
     databaseLogging: true,
     lowerLoggingFrequency: true,
 
@@ -43,13 +43,14 @@ let config = {
     lowHumidityThreshold: 30,
     criticalHumidityThreshold: 24,
 
-    minLevel: 0,
-    maxLevel: 14,
+    minSpeed: 0,
+    maxSpeed: 14,
 };
 
-let debug = {};
-let device = {};
-let purifier, night, times;
+let debug = {}, device = {}, dayLevels = [], nightLevels = [], purifier, night, times;
+
+generateDayLevels(5, 59);
+generateNightLevels(0, 48);
 
 getData();
 setInterval(() => getData(), config.purifierUpdateFrequency * 1000);
@@ -59,35 +60,97 @@ if (config.enableAirly) {
     setInterval(() => getAirlyData(), config.airlyUpdateFrequency * 1000);
 }
 
-const dayLevels = [
-    {pm25: 70, level: 16},
-    {pm25: 65, level: 15},
-    {pm25: 60, level: 14},
-    {pm25: 50, level: 13},
-    {pm25: 46, level: 12},
-    {pm25: 41, level: 11},
-    {pm25: 40, level: 10},
-    {pm25: 38, level: 9},
-    {pm25: 35, level: 8},
-    {pm25: 32, level: 7},
-    {pm25: 28, level: 6},
-    {pm25: 24, level: 5},
-    {pm25: 18, level: 3},
-    {pm25: 13, level: 2},
-    {pm25: 9, level: 1},
-    {pm25: 5, level: 0},
-];
+async function generateDayLevels(lowPollution, highPollution) {
+    let pollutionRange = (highPollution - lowPollution);
 
-const nightLevels = [
-    {pm25: 48, level: 8},
-    {pm25: 42, level: 7},
-    {pm25: 36, level: 6},
-    {pm25: 30, level: 5},
-    {pm25: 24, level: 3},
-    {pm25: 18, level: 2},
-    {pm25: 11, level: 1},
-    {pm25: 8, level: 0},
-];
+    let low = {
+        range: pollutionRange * (35 / 100),
+        levels: 5,
+        lowLevel: 0,
+        maxLevel: function () {
+            return low.lowLevel + low.levels;
+        },
+        low: lowPollution,
+        high: function () {
+            return low.low + low.range;
+        },
+        speed: function () {
+            return low.range / low.levels;
+        },
+    };
+
+    let mid = {
+        range: pollutionRange * (50 / 100),
+        levels: 6,
+        lowLevel: low.maxLevel(),
+        maxLevel: function () {
+            return mid.lowLevel + mid.levels;
+        },
+        low: low.high(),
+        high: function () {
+            return mid.low + mid.range;
+        },
+        speed: function () {
+            return mid.range / mid.levels;
+        },
+    };
+
+    let high = {
+        range: pollutionRange * (15 / 100),
+        levels: 3,
+        lowLevel: mid.maxLevel(),
+        maxLevel: function () {
+            return high.lowLevel + high.levels;
+        },
+        low: mid.high(),
+        high: function () {
+            return high.low + high.range;
+        },
+        speed: function () {
+            return high.range / high.levels;
+        },
+    };
+
+    for (let i = 0; i <= low.levels; ++i) {
+        dayLevels.push({pm25: (i * low.speed()) + low.low, level: i + low.lowLevel});
+    }
+
+    for (let i = 1; i <= mid.levels; ++i) {
+        dayLevels.push({pm25: (i * mid.speed()) + mid.low, level: i + mid.lowLevel})
+    }
+
+    for (let i = 1; i <= high.levels; ++i) {
+        dayLevels.push({pm25: (i * high.speed()) + high.low, level: i + high.lowLevel})
+    }
+
+    dayLevels.reverse();
+}
+
+async function generateNightLevels(lowPollution, highPollution) {
+    let pollutionRange = (highPollution - lowPollution);
+
+    let low = {
+        range: pollutionRange,
+        levels: 8, //maxSpeed - minSpeed
+        lowLevel: 0,
+        maxLevel: function () {
+            return low.lowLevel + low.levels;
+        },
+        low: lowPollution,
+        high: function () {
+            return low.low + low.range;
+        },
+        speed: function () {
+            return low.range / low.levels;
+        },
+    };
+
+    for (let i = 0; i <= low.levels; ++i) {
+        nightLevels.push({pm25: (i * low.speed()) + low.low, level: i + low.lowLevel});
+    }
+
+    nightLevels.reverse();
+}
 
 async function prettyPrint(debug) {
     console.log(JSON.stringify(debug));
@@ -104,7 +167,7 @@ async function connectDevice() {
     device.mode = await purifier.mode();
 }
 
-async function checkForNight(){
+async function checkForNight() {
     times = SunCalc.getTimes(new Date(), config.latitude, config.longitude);
     if (!config.locationBased) {
         night = !moment().isBetween(new moment(config.dayStart, "HH:mm"), new moment(config.dayEnd, "HH:mm"));
@@ -116,15 +179,15 @@ async function checkForNight(){
 }
 
 async function getData() {
+    let newLevel = 0;
+
     const date = new Date();
     await checkForNight();
     await connectDevice();
 
-    let newLevel = 0;
-    debug.power = device.power ? " mode: " + device.mode : " power: " + device.power;
+    debug.night = (device.power ? device.mode : device.power);
     debug.time = date.toLocaleTimeString();
     debug.pm25 = parseInt(device.pm25).toLocaleString('en-US', {minimumIntegerDigits: 3});
-    debug.level = device.level;
     debug.humidity = device.humidity;
     debug.temperature = parseFloat(device.temperature).toFixed(1);
 
@@ -198,7 +261,7 @@ async function getData() {
             }
         }
     }
-
+    debug.level = newLevel;
     await prettyPrint(debug);
 
     if (config.lowerLoggingFrequency && config.databaseLogging) {
