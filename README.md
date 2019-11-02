@@ -2,10 +2,13 @@
 An improved driver for Xiaomi Air Purifier 2/2S automation.
 
 # Features:
+- Force turn on / favourite mode
+- Display settings
 - Day/Night mode
 - Day/Night cooling
 - Unconditional speed boost
-- Low/Critical humidity protection
+- Low/Critical humidity warning
+- High temperature warning
 - Low temperature protection
 - Highly customisable speed
 - Database logger
@@ -25,19 +28,19 @@ npm install
 # Configuration
 Go to `app.mjs` and set necessary flags:
 ```
-const airPurifierIP = 'AIR PURIFIER IP ADDRESS';
+airPurifierIP = 'AIR PURIFIER IP ADDRESS';
 ```
 If You want to use Airly measurements:
 ```
-const airlyApiKey = "AIRLY API KEY";
-const latitude = "LATITUDE";
-const longitude = "LONGITUDE";
+airlyApiKey = "AIRLY API KEY";
+latitude = "LATITUDE";
+longitude = "LONGITUDE";
 ```
 Or disable it by setting:
 ```
-const enableAirly = false;
+enableAirly = false;
 ```
-Setup database connection `db.mjs`. All necessary fields will be created automaticaly.
+Setup database connection `db.mjs`. All necessary fields will be created automatically.
 ```
 const host = "localhost";
 const port = "5432";
@@ -50,7 +53,7 @@ If You won't be using database, remove this import in `app.mjs` and set logging 
 import * as db from './db.mjs';
 ```
 ```
-const databaseLogging = false;
+databaseLogging = false;
 ```
 
 # Running the driver

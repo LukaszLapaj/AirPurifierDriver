@@ -192,7 +192,7 @@ async function prettyPrint(debug) {
 async function connectDevice() {
     purifier = await miio.device({address: config.airPurifierIP});
     device.pm25 = await purifier.pm2_5();
-    device.temperature = (await purifier.temperature()).value;
+    device.temperature = (await purifier.temperature()).value.toFixed(1);
     device.humidity = await purifier.relativeHumidity();
     device.level = await purifier.favoriteLevel();
     device.led = await purifier.led();
@@ -220,7 +220,7 @@ async function getData() {
 
     device.power ? debug.mode = device.mode : debug.power = device.power;
     debug.time = date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit', hour12: false});
-    debug.pm25 = parseInt(device.pm25).toLocaleString('en-US', {minimumIntegerDigits: 3});
+    debug.pm25 = device.pm25.toLocaleString([], {minimumIntegerDigits: 3});
     debug.humidity = device.humidity;
     debug.temperature = device.temperature;
 
