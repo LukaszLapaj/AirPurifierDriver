@@ -159,8 +159,34 @@ async function generateNightLevels(lowPollution, highPollution) {
     nightLevels.reverse();
 }
 
+function printer(str, element){
+    if(element)
+        return " " + str + ": " + element;
+    return "";
+}
+
 async function prettyPrint(debug) {
-    console.log(JSON.stringify(debug));
+    let log = "";
+    log += printer("time", debug.time);
+    log += printer("pm2.5", debug.pm25);
+    log += printer("level", debug.level);
+    log += printer("humidity", debug.humidity);
+    log += printer("temperature", debug.temperature);
+    log += printer("mode", debug.mode);
+    log += printer("sunriseEnd", debug.sunriseEnd);
+    log += printer("night", debug.night);
+    log += printer("nightMode", debug.nightMode);
+    log += printer("disableLedAtNight", debug.disableLedAtNight);
+    log += printer("criticalLevelDisplay", debug.criticalLevelDisplay);
+    log += printer("unconditionalBoostLevel", debug.unconditionalBoostLevel);
+    log += printer("overridePurifierMode", debug.overridePurifierMode);
+    log += printer("ifTurnedOnOverridePurifierMode", debug.ifTurnedOnOverridePurifierMode);
+    log += printer("preventHighTemperature", debug.preventHighTemperature);
+    log += printer("dayEnableCoolingDownSpeed", debug.dayEnableCoolingDownSpeed);
+    log += printer("preventLowHumidity", debug.preventLowHumidity);
+    log += printer("preventLowTemperature", debug.preventLowTemperature);
+    log += printer("criticalHumidityThreshold", debug.criticalHumidityThreshold);
+    console.log("{" + log + "}");
 }
 
 async function connectDevice() {
