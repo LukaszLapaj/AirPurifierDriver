@@ -12,7 +12,7 @@
     "miio": "git+https://github.com/LukaszLapaj/miio.git#master",
     "moment": "^2.24.0",
     "pg": "^7.12.1",
-    "sequelize": "4.44.2",
+    "sequelize": "5.21.2",
     "suncalc": "^1.8.0",
     "yarn": "^1.19.1"
   }
