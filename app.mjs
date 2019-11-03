@@ -163,8 +163,8 @@ async function generateNightLevels(lowPollution, highPollution) {
     nightLevels.reverse();
 }
 
-function printer(str, element){
-    if(element)
+function printer(str, element) {
+    if (element || element == 0)
         return " " + str + ": " + element;
     return "";
 }
