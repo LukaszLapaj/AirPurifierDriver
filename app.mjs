@@ -50,11 +50,15 @@ let config = {
     lowHumidityThreshold: 30,
     criticalHumidityThreshold: 24,
 
+    enableHysteresis: true,
+    advancedHysteresis: true,
+    hysteresisLevel: 2,
+
     minSpeed: 0,
     maxSpeed: 14,
 };
 
-let debug = {}, device = {}, dayLevels = [], nightLevels = [], purifier, night, times;
+let debug = {}, device = {}, dayLevels = [], nightLevels = [], hysteresisStack = [], purifier, night, times;
 
 generateDayLevels(5, 59);
 generateNightLevels(0, 48);
@@ -180,6 +184,10 @@ async function prettyPrint(debug) {
     log += printer("criticalLevelDisplay", debug.criticalLevelDisplay);
     log += printer("unconditionalBoostLevel", debug.unconditionalBoostLevel);
     log += printer("overridePurifierMode", debug.overridePurifierMode);
+    log += printer("hysteresis", debug.hysteresis);
+    log += printer("advancedHysteresis", debug.advancedHysteresis);
+    log += printer("advancedHysteresisUp", debug.advancedHysteresisUp);
+    log += printer("advancedHysteresisDown", debug.advancedHysteresisDown);
     log += printer("ifTurnedOnOverridePurifierMode", debug.ifTurnedOnOverridePurifierMode);
     log += printer("preventHighTemperature", debug.preventHighTemperature);
     log += printer("dayEnableCoolingDownSpeed", debug.dayEnableCoolingDownSpeed);
@@ -211,15 +219,66 @@ async function checkForNight() {
     }
 }
 
+async function saveLevel(nextLevel) {
+    let l = config.hysteresisLevel + 1;
+    hysteresisStack[hysteresisStack.length] = nextLevel;
+
+    if (hysteresisStack.length > l) {
+        hysteresisStack = hysteresisStack.slice(hysteresisStack.length - l, hysteresisStack.length);
+    }
+}
+
+async function hysteresis(nextLevel) {
+    await saveLevel(nextLevel);
+
+    debug.advancedHysteresisUp = null;
+    debug.advancedHysteresisDown = null;
+
+    let length = hysteresisStack.length;
+    if (length < config.hysteresisLevel + 1) {
+        return hysteresisStack[length - 1];
+    }
+
+    let currDiff = hysteresisStack[length - 2] - hysteresisStack[length - 1];
+    let absCurrDiff = Math.abs(currDiff);
+
+    let test = true;
+    for (let i = config.hysteresisLevel; i > 1; --i) {
+        test = (hysteresisStack[length - i] == hysteresisStack[length - i - 1]) && test;
+        if (!test) {
+            break;
+        }
+    }
+    debug.hysteresis = test;
+
+    if (test && absCurrDiff < 2) {
+        return hysteresisStack[length - 2];
+    }
+
+    if (test && config.advancedHysteresis && absCurrDiff >= 4) {
+        let currentHysteresis = Math.floor(absCurrDiff / 2);
+        let lastLevel = hysteresisStack[length - 2];
+        if (absCurrDiff > currDiff) {
+            debug.advancedHysteresisUp = (lastLevel + currentHysteresis);
+            return (lastLevel + currentHysteresis);
+        } else {
+            debug.advancedHysteresisDown = (lastLevel - currentHysteresis);
+            return (lastLevel - currentHysteresis);
+        }
+    }
+
+    return hysteresisStack[length - 1];
+}
+
 async function getData() {
-    let newLevel = 0;
+    let nextLevel = 0;
 
     const date = new Date();
     await checkForNight();
     await connectDevice();
 
     device.power ? debug.mode = device.mode : debug.power = device.power;
-    debug.time = date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit', hour12: false});
+    debug.time = date.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false});
     debug.pm25 = device.pm25.toLocaleString([], {minimumIntegerDigits: 3});
     debug.humidity = device.humidity;
     debug.temperature = device.temperature;
@@ -228,14 +287,14 @@ async function getData() {
         debug.nightMode = night;
         for (let key in nightLevels) {
             if (device.pm25 >= nightLevels[key].pm25) {
-                newLevel = nightLevels[key].level;
+                nextLevel = nightLevels[key].level;
                 break;
             }
         }
         if (config.nightEnableCoolingDown && (device.temperature >= config.nightCoolingDownThreshold)) {
             let temperatureDifference = device.temperature - config.nightCoolingDownThreshold;
             let speed = Math.floor(1 + (temperatureDifference / config.nightTempBetweenLevels));
-            newLevel += speed;
+            nextLevel += speed;
             debug.nightEnableCoolingDownSpeed = speed;
         }
         if (config.disableLedAtNight && device.led) {
@@ -250,14 +309,14 @@ async function getData() {
     } else {
         for (let key in dayLevels) {
             if (device.pm25 >= dayLevels[key].pm25) {
-                newLevel = dayLevels[key].level;
+                nextLevel = dayLevels[key].level;
                 break;
             }
         }
         if (config.dayEnableCoolingDown && (device.temperature >= config.dayCoolingDownThreshold)) {
             let temperatureDifference = device.temperature - config.dayCoolingDownThreshold;
             let speed = Math.floor(1 + (temperatureDifference / config.dayTempBetweenLevels));
-            newLevel += speed;
+            nextLevel += speed;
             if (speed > config.preventHighTemperatureMultiplier) {
                 await purifier.buzzer(1);
                 await purifier.buzzer(0);
@@ -272,23 +331,25 @@ async function getData() {
         }
     }
 
+    nextLevel = await hysteresis(nextLevel);
+
     if (config.unconditionalBoost) {
-        newLevel += config.unconditionalBoostLevel;
+        nextLevel += config.unconditionalBoostLevel;
         debug.unconditionalBoostLevel = config.unconditionalBoostLevel;
     }
 
-    if (config.preventLowHumidity && (device.humidity <= config.lowHumidityThreshold) && newLevel >= 1) {
-        newLevel -= 1;
+    if (config.preventLowHumidity && (device.humidity <= config.lowHumidityThreshold) && nextLevel >= 1) {
+        nextLevel -= 1;
         debug.preventLowHumidity = config.preventLowHumidity;
     }
 
     if (config.preventLowTemperature && (device.temperature <= config.preventLowTemperatureThreshold)) {
-        newLevel = config.preventLowTemperatureSpeed;
+        nextLevel = config.preventLowTemperatureSpeed;
         debug.preventLowTemperature = config.preventLowTemperature;
     }
 
     if (config.preventLowHumidity && (device.humidity <= config.criticalHumidityThreshold)) {
-        newLevel = 0;
+        nextLevel = 0;
         debug.criticalHumidityThreshold = config.preventLowHumidity;
     }
 
@@ -307,17 +368,18 @@ async function getData() {
         }
     }
 
+    debug.level = nextLevel;
+    await prettyPrint(debug);
+
     if (device.mode == 'favorite') {
-        if (device.level != newLevel) {
+        if (device.level != nextLevel) {
             try {
-                await purifier.setFavoriteLevel(newLevel);
+                await purifier.setFavoriteLevel(nextLevel);
             } catch (e) {
                 console.log(e);
             }
         }
     }
-    debug.level = newLevel;
-    await prettyPrint(debug);
 
     if (config.lowerLoggingFrequency && config.databaseLogging) {
         let humidity = device.humidity, pm25 = device.pm25, mode = device.mode, level = device.level,
@@ -332,7 +394,6 @@ async function getData() {
     } else {
         config.lowerLoggingFrequency = true;
     }
-
     purifier.destroy();
 }
 
