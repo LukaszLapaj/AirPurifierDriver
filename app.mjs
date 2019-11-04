@@ -5,8 +5,8 @@ import * as db from './db.mjs';
 import moment from 'moment';
 import SunCalc from 'suncalc';
 
-let config = {
     airPurifierIP: '192.168.0.2',
+const config = {
     forceTurnOn: false,
     overridePurifierMode: true,
     ifTurnedOnOverridePurifierMode: true,
@@ -58,7 +58,8 @@ let config = {
     maxSpeed: 14,
 };
 
-let debug = {}, device = {}, dayLevels = [], nightLevels = [], hysteresisStack = [], purifier, night, times;
+let debug = {}, purifier = {}, dayLevels = [], nightLevels = [], hysteresisStack = [], night, times;
+let logState = true;
 
 generateDayLevels(5, 59);
 generateNightLevels(0, 48);
@@ -198,14 +199,15 @@ async function prettyPrint(debug) {
 }
 
 async function connectDevice() {
-    purifier = await miio.device({address: config.airPurifierIP});
-    device.pm25 = await purifier.pm2_5();
-    device.temperature = (await purifier.temperature()).value.toFixed(1);
-    device.humidity = await purifier.relativeHumidity();
-    device.level = await purifier.favoriteLevel();
-    device.led = await purifier.led();
-    device.power = await purifier.power();
-    device.mode = await purifier.mode();
+    purifier.device = await miio.device({address: config.airPurifierIP});
+    purifier.pm25 = await purifier.device.pm2_5();
+    purifier.temperature = (await purifier.device.temperature()).value.toFixed(1);
+    purifier.humidity = await purifier.device.relativeHumidity();
+    purifier.level = await purifier.device.favoriteLevel();
+    purifier.led = await purifier.device.led();
+    purifier.power = await purifier.device.power();
+    purifier.mode = await purifier.device.mode();
+    // purifier.device.destroy();
 }
 
 async function checkForNight() {
@@ -277,57 +279,57 @@ async function getData() {
     await checkForNight();
     await connectDevice();
 
-    device.power ? debug.mode = device.mode : debug.power = device.power;
+    purifier.power ? debug.mode = purifier.mode : debug.power = purifier.power;
     debug.time = date.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false});
-    debug.pm25 = device.pm25.toLocaleString([], {minimumIntegerDigits: 3});
-    debug.humidity = device.humidity;
-    debug.temperature = device.temperature;
+    debug.pm25 = purifier.pm25.toLocaleString([], {minimumIntegerDigits: 3});
+    debug.humidity = purifier.humidity;
+    debug.temperature = purifier.temperature;
 
     if (night && config.enableNightMode) {
         debug.nightMode = night;
         for (let key in nightLevels) {
-            if (device.pm25 >= nightLevels[key].pm25) {
+            if (purifier.pm25 >= nightLevels[key].pm25) {
                 nextLevel = nightLevels[key].level;
                 break;
             }
         }
-        if (config.nightEnableCoolingDown && (device.temperature >= config.nightCoolingDownThreshold)) {
-            let temperatureDifference = device.temperature - config.nightCoolingDownThreshold;
+        if (config.nightEnableCoolingDown && (purifier.temperature >= config.nightCoolingDownThreshold)) {
+            let temperatureDifference = purifier.temperature - config.nightCoolingDownThreshold;
             let speed = Math.floor(1 + (temperatureDifference / config.nightTempBetweenLevels));
             nextLevel += speed;
             debug.nightEnableCoolingDownSpeed = speed;
         }
-        if (config.disableLedAtNight && device.led) {
-            if (device.pm25 >= config.criticalPM25Display && config.criticalLevelDisplay) {
-                await purifier.led(1);
+        if (config.disableLedAtNight && purifier.led) {
+            if (purifier.pm25 >= config.criticalPM25Display && config.criticalLevelDisplay) {
+                await purifier.device.led(1);
                 debug.criticalLevelDisplay = config.criticalLevelDisplay;
             } else {
-                await purifier.led(0);
+                await purifier.device.led(0);
                 debug.disableLedAtNight = config.disableLedAtNight;
             }
         }
     } else {
         for (let key in dayLevels) {
-            if (device.pm25 >= dayLevels[key].pm25) {
+            if (purifier.pm25 >= dayLevels[key].pm25) {
                 nextLevel = dayLevels[key].level;
                 break;
             }
         }
-        if (config.dayEnableCoolingDown && (device.temperature >= config.dayCoolingDownThreshold)) {
-            let temperatureDifference = device.temperature - config.dayCoolingDownThreshold;
+        if (config.dayEnableCoolingDown && (purifier.temperature >= config.dayCoolingDownThreshold)) {
+            let temperatureDifference = purifier.temperature - config.dayCoolingDownThreshold;
             let speed = Math.floor(1 + (temperatureDifference / config.dayTempBetweenLevels));
             nextLevel += speed;
             if (speed > config.preventHighTemperatureMultiplier) {
-                await purifier.buzzer(1);
-                await purifier.buzzer(0);
+                await purifier.device.buzzer(1);
+                await purifier.device.buzzer(0);
                 debug.preventHighTemperature = config.preventHighTemperature;
                 debug.dayEnableCoolingDownSpeed = speed;
             } else {
                 debug.dayEnableCoolingDownSpeed = speed;
             }
         }
-        if (config.disableLedAtNight && device.led != true) {
-            await purifier.led(1);
+        if (config.disableLedAtNight && purifier.led != true) {
+            await purifier.device.led(1);
         }
     }
 
@@ -338,30 +340,30 @@ async function getData() {
         debug.unconditionalBoostLevel = config.unconditionalBoostLevel;
     }
 
-    if (config.preventLowHumidity && (device.humidity <= config.lowHumidityThreshold) && nextLevel >= 1) {
+    if (config.preventLowHumidity && (purifier.humidity <= config.lowHumidityThreshold) && nextLevel >= 1) {
         nextLevel -= 1;
         debug.preventLowHumidity = config.preventLowHumidity;
     }
 
-    if (config.preventLowTemperature && (device.temperature <= config.preventLowTemperatureThreshold)) {
+    if (config.preventLowTemperature && (purifier.temperature <= config.preventLowTemperatureThreshold)) {
         nextLevel = config.preventLowTemperatureSpeed;
         debug.preventLowTemperature = config.preventLowTemperature;
     }
 
-    if (config.preventLowHumidity && (device.humidity <= config.criticalHumidityThreshold)) {
+    if (config.preventLowHumidity && (purifier.humidity <= config.criticalHumidityThreshold)) {
         nextLevel = 0;
         debug.criticalHumidityThreshold = config.preventLowHumidity;
     }
 
-    if (config.forceTurnOn && !device.power) {
-        await purifier.power(1);
-        purifier.power = await purifier.power();
+    if (config.forceTurnOn && !purifier.power) {
+        await purifier.device.power(1);
+        purifier.device.power = await purifier.device.power();
     }
 
-    if ((config.overridePurifierMode && device.mode != 'favorite') || config.ifTurnedOnOverridePurifierMode && device.power) {
+    if ((config.overridePurifierMode && purifier.mode != 'favorite') || config.ifTurnedOnOverridePurifierMode && purifier.power) {
         try {
-            await purifier.mode('favorite');
-            device.mode = await purifier.mode();
+            await purifier.device.mode('favorite');
+            purifier.mode = await purifier.device.mode();
             config.overridePurifierMode ? debug.overridePurifierMode = config.overridePurifierMode : debug.ifTurnedOnOverridePurifierMode = config.ifTurnedOnOverridePurifierMode;
         } catch (e) {
             console.log(e);
@@ -371,30 +373,28 @@ async function getData() {
     debug.level = nextLevel;
     await prettyPrint(debug);
 
-    if (device.mode == 'favorite') {
-        if (device.level != nextLevel) {
+    if (purifier.mode == 'favorite') {
+        if (purifier.level != nextLevel) {
             try {
-                await purifier.setFavoriteLevel(nextLevel);
+                await purifier.device.setFavoriteLevel(nextLevel);
             } catch (e) {
                 console.log(e);
             }
         }
     }
 
-    if (config.lowerLoggingFrequency && config.databaseLogging) {
-        let humidity = device.humidity, pm25 = device.pm25, mode = device.mode, level = device.level,
-            temperature = device.temperature;
+    if (config.databaseLogging) {
+        let humidity = purifier.humidity, pm25 = purifier.pm25, mode = purifier.mode, level = purifier.level,
+            temperature = purifier.temperature;
         let data = {date, temperature: temperature, humidity, pm25, mode, level: level};
         try {
             await db.Air.create(data);
         } catch (e) {
             console.log("Database insert error");
         }
-        config.owerLoggingFrequency = false;
-    } else {
-        config.lowerLoggingFrequency = true;
+        logState = !(config.lowerLoggingFrequency && logState == true);
     }
-    purifier.destroy();
+    purifier.device.destroy();
 }
 
 async function getAirlyData() {
