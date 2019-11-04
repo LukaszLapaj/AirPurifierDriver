@@ -5,7 +5,10 @@ import * as db from './db.mjs';
 import moment from 'moment';
 import SunCalc from 'suncalc';
 
-    airPurifierIP: '192.168.0.2',
+let purifier = {
+    ip: '192.168.0.222',
+};
+
 const config = {
     forceTurnOn: false,
     overridePurifierMode: true,
@@ -58,7 +61,7 @@ const config = {
     maxSpeed: 14,
 };
 
-let debug = {}, purifier = {}, dayLevels = [], nightLevels = [], hysteresisStack = [], night, times;
+let debug = {}, dayLevels = [], nightLevels = [], hysteresisStack = [], night, times;
 let logState = true;
 
 generateDayLevels(5, 59);
@@ -199,7 +202,7 @@ async function prettyPrint(debug) {
 }
 
 async function connectDevice() {
-    purifier.device = await miio.device({address: config.airPurifierIP});
+    purifier.device = await miio.device({address: purifier.ip});
     purifier.pm25 = await purifier.device.pm2_5();
     purifier.temperature = (await purifier.device.temperature()).value.toFixed(1);
     purifier.humidity = await purifier.device.relativeHumidity();
