@@ -1,0 +1,49 @@
+{
+  "forceTurnOn": false,
+  "overridePurifierMode": true,
+  "ifTurnedOnOverridePurifierMode": true,
+  "disableLed": false,
+  "timesPerMinute": 5,
+  "purifierUpdateFrequency": 12,
+  "databaseLogging": true,
+  "lowerLoggingFrequency": false,
+
+  "enableNightMode": true,
+  "disableLedAtNight": true,
+  "criticalPM25Display": 25,
+  "criticalLevelDisplay": true,
+  "locationBased": false,
+  "dayStart": "6:30",
+  "dayEnd": "23:00",
+
+  "enableAirly": false,
+  "airlyUpdateFrequency": 60,
+  "airlyApiKey": "",
+  "latitude": "50.1",
+  "longitude": "20.0",
+
+  "unconditionalBoost": false,
+  "unconditionalBoostLevel": 0,
+
+  "preventLowTemperature": true,
+  "preventLowTemperatureThreshold": 24.8,
+  "preventLowTemperatureSpeed": 0,
+
+  "dayEnableCoolingDown": true,
+  "dayCoolingDownThreshold": 26.5,
+  "dayTempBetweenLevels": 0.6,
+  "preventHighTemperature": true,
+  "preventHighTemperatureMultiplier": 5,
+
+  "nightEnableCoolingDown": true,
+  "nightCoolingDownThreshold": 27.0,
+  "nightTempBetweenLevels": 0.4,
+
+  "preventLowHumidity": true,
+  "lowHumidityThreshold": 30,
+  "criticalHumidityThreshold": 26,
+
+  "enableHysteresis": true,
+  "advancedHysteresis": true,
+  "hysteresisLevel": 2
+}

@@ -1,6 +1,6 @@
 {
   "name": "AirPurifierDriver",
-  "version": "4.2.1",
+  "version": "5.0.0",
   "private": true,
   "main": "index.js",
   "author": "Lukasz Lapaj",

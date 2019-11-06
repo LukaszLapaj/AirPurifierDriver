@@ -5,70 +5,32 @@ import * as db from './db.mjs';
 import moment from 'moment';
 import SunCalc from 'suncalc';
 
-let purifier = {
-    ip: '192.168.0.222',
-};
+import jsonConfig from "./config.json";
+import jsonDevices from "./devices.json";
 
-const config = {
-    forceTurnOn: false,
-    overridePurifierMode: true,
-    ifTurnedOnOverridePurifierMode: true,
-    disableLed: false,
-    purifierUpdateFrequency: 15,
-    databaseLogging: true,
-    lowerLoggingFrequency: true,
+const config = jsonConfig;
+let devices = jsonDevices;
 
-    enableNightMode: true,
-    disableLedAtNight: true,
-    criticalPM25Display: 25,
-    criticalLevelDisplay: true,
-    locationBased: false,
-    dayStart: "6:30",
-    dayEnd: "22:30",
-
-    enableAirly: true,
-    airlyUpdateFrequency: 60,
-    airlyApiKey: "",
-    latitude: "50.1",
-    longitude: "20.0",
-
-    unconditionalBoost: false,
-    unconditionalBoostLevel: 0,
-
-    preventLowTemperature: true,
-    preventLowTemperatureThreshold: 25.0,
-    preventLowTemperatureSpeed: 0,
-
-    dayEnableCoolingDown: true,
-    dayCoolingDownThreshold: 26.5,
-    dayTempBetweenLevels: 0.6,
-    preventHighTemperature: true,
-    preventHighTemperatureMultiplier: 20,
-
-    nightEnableCoolingDown: true,
-    nightCoolingDownThreshold: 27.0,
-    nightTempBetweenLevels: 0.4,
-
-    preventLowHumidity: true,
-    lowHumidityThreshold: 30,
-    criticalHumidityThreshold: 24,
-
-    enableHysteresis: true,
-    advancedHysteresis: true,
-    hysteresisLevel: 2,
-
-    minSpeed: 0,
-    maxSpeed: 14,
-};
-
-let debug = {}, dayLevels = [], nightLevels = [], hysteresisStack = [], night, times;
+let dayLevels = [], nightLevels = [], night, times;
 let logState = true;
 
-generateDayLevels(5, 59);
-generateNightLevels(0, 48);
+generateDayLevels(6, 60);
+generateNightLevels(6, 54);
 
-getData();
-setInterval(() => getData(), config.purifierUpdateFrequency * 1000);
+function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+init();
+
+async function init() {
+    for (let id = 0; id < devices.length; ++id) {
+        devices[id].id = id;
+        getData(devices[id]);
+        setInterval(() => getData(devices[id]), config.purifierUpdateFrequency * 1000);
+        await sleep(6000);
+    }
+}
 
 if (config.enableAirly) {
     getAirlyData();
@@ -175,42 +137,52 @@ function printer(str, element) {
 
 async function prettyPrint(debug) {
     let log = "";
-    log += printer("time", debug.time);
-    log += printer("pm2.5", debug.pm25);
-    log += printer("level", debug.level);
-    log += printer("humidity", debug.humidity);
-    log += printer("temperature", debug.temperature);
-    log += printer("mode", debug.mode);
-    log += printer("sunriseEnd", debug.sunriseEnd);
-    log += printer("night", debug.night);
-    log += printer("nightMode", debug.nightMode);
-    log += printer("disableLedAtNight", debug.disableLedAtNight);
-    log += printer("criticalLevelDisplay", debug.criticalLevelDisplay);
-    log += printer("unconditionalBoostLevel", debug.unconditionalBoostLevel);
-    log += printer("overridePurifierMode", debug.overridePurifierMode);
-    log += printer("hysteresis", debug.hysteresis);
-    log += printer("advancedHysteresis", debug.advancedHysteresis);
-    log += printer("advancedHysteresisUp", debug.advancedHysteresisUp);
-    log += printer("advancedHysteresisDown", debug.advancedHysteresisDown);
-    log += printer("ifTurnedOnOverridePurifierMode", debug.ifTurnedOnOverridePurifierMode);
-    log += printer("preventHighTemperature", debug.preventHighTemperature);
-    log += printer("dayEnableCoolingDownSpeed", debug.dayEnableCoolingDownSpeed);
-    log += printer("preventLowHumidity", debug.preventLowHumidity);
-    log += printer("preventLowTemperature", debug.preventLowTemperature);
-    log += printer("criticalHumidityThreshold", debug.criticalHumidityThreshold);
+    let parameters = {
+        "device": "deviceId",
+        "time": "time",
+        "pm2.5": "pm25",
+        "level": "level",
+        "humidity": "humidity",
+        "temperature": "temperature",
+        "mode": "mode",
+        "sunriseEnd": "sunriseEnd",
+        "night": "night",
+        "nightMode": "nightMode",
+        "disableLedAtNight": "disableLedAtNight",
+        "criticalLevelDisplay": "criticalLevelDisplay",
+        "unconditionalBoostLevel": "unconditionalBoostLevel",
+        "overridePurifierMode": "overridePurifierMode",
+        "hysteresis": "hysteresis",
+        "advancedHysteresisUp": "advancedHysteresisUp",
+        "advancedHysteresisDown": "advancedHysteresisDown",
+        "ifTurnedOnOverridePurifierMode": "ifTurnedOnOverridePurifierMode",
+        "preventHighTemperature": "preventHighTemperature",
+        "dayEnableCoolingDownSpeed": "dayEnableCoolingDownSpeed",
+        "preventLowHumidity": "preventLowHumidity",
+        "preventLowTemperature": "preventLowTemperature",
+        "criticalHumidityThreshold": "criticalHumidityThreshold",
+    };
+    let k = Object.keys(parameters);
+    let v = Object.values(parameters);
+    for (let i = 0; i < k.length; ++i) {
+        log += printer(k[i], debug[v[i]]);
+    }
     console.log("{" + log + "}");
 }
 
-async function connectDevice() {
-    purifier.device = await miio.device({address: purifier.ip});
-    purifier.pm25 = await purifier.device.pm2_5();
-    purifier.temperature = (await purifier.device.temperature()).value.toFixed(1);
-    purifier.humidity = await purifier.device.relativeHumidity();
-    purifier.level = await purifier.device.favoriteLevel();
-    purifier.led = await purifier.device.led();
-    purifier.power = await purifier.device.power();
-    purifier.mode = await purifier.device.mode();
-    // purifier.device.destroy();
+async function connectDevice(purifier) {
+    try {
+        purifier.device = await miio.device({address: purifier.ip});
+        purifier.pm25 = await purifier.device.pm2_5();
+        purifier.temperature = (await purifier.device.temperature()).value.toFixed(1);
+        purifier.humidity = await purifier.device.relativeHumidity();
+        purifier.level = await purifier.device.favoriteLevel();
+        purifier.led = await purifier.device.led();
+        purifier.power = await purifier.device.power();
+        purifier.mode = await purifier.device.mode();
+    } catch (e) {
+        console.log("Unable to connect device: " + purifier.id);
+    }
 }
 
 async function checkForNight() {
@@ -224,17 +196,19 @@ async function checkForNight() {
     }
 }
 
-async function saveLevel(nextLevel) {
+async function saveLevel(purifier, nextLevel) {
     let l = config.hysteresisLevel + 1;
+    let hysteresisStack = purifier.hysteresisStack;
     hysteresisStack[hysteresisStack.length] = nextLevel;
 
     if (hysteresisStack.length > l) {
-        hysteresisStack = hysteresisStack.slice(hysteresisStack.length - l, hysteresisStack.length);
+        purifier.hysteresisStack = hysteresisStack.slice(hysteresisStack.length - l, hysteresisStack.length);
     }
 }
 
-async function hysteresis(nextLevel) {
-    await saveLevel(nextLevel);
+async function hysteresis(nextLevel, debug, purifier) {
+    await saveLevel(purifier, nextLevel);
+    let hysteresisStack = purifier.hysteresisStack;
 
     debug.advancedHysteresisUp = null;
     debug.advancedHysteresisDown = null;
@@ -275,14 +249,16 @@ async function hysteresis(nextLevel) {
     return hysteresisStack[length - 1];
 }
 
-async function getData() {
+async function getData(purifier) {
     let nextLevel = 0;
+    let debug = {};
 
     const date = new Date();
     await checkForNight();
-    await connectDevice();
+    await connectDevice(purifier);
 
     purifier.power ? debug.mode = purifier.mode : debug.power = purifier.power;
+    debug.deviceId = purifier.id;
     debug.time = date.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false});
     debug.pm25 = purifier.pm25.toLocaleString([], {minimumIntegerDigits: 3});
     debug.humidity = purifier.humidity;
@@ -335,8 +311,8 @@ async function getData() {
             await purifier.device.led(1);
         }
     }
-
-    nextLevel = await hysteresis(nextLevel);
+    
+    nextLevel = await hysteresis(nextLevel, debug, purifier);
 
     if (config.unconditionalBoost) {
         nextLevel += config.unconditionalBoostLevel;
@@ -374,7 +350,8 @@ async function getData() {
     }
 
     debug.level = nextLevel;
-    await prettyPrint(debug);
+    purifier.debug = debug;
+    await prettyPrint(purifier.debug);
 
     if (purifier.mode == 'favorite') {
         if (purifier.level != nextLevel) {
@@ -386,7 +363,8 @@ async function getData() {
         }
     }
 
-    if (config.databaseLogging) {
+
+    if (config.databaseLogging && purifier.id == 0) {
         let humidity = purifier.humidity, pm25 = purifier.pm25, mode = purifier.mode, level = purifier.level,
             temperature = purifier.temperature;
         let data = {date, temperature: temperature, humidity, pm25, mode, level: level};
