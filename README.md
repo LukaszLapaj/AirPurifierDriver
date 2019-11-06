@@ -111,6 +111,7 @@ Relevant variables:
 
 # Install
 ```
+git clone -b master https://github.com/LukaszLapaj/AirPurifierDriver.git
 yarn install
 npm install
 ```
@@ -152,9 +153,12 @@ Start your database server, then application:
 nodejs --experimental-modules index.mjs
 ```
 
-# Example logged data
+# Example output
+<img src="screenshots/console.PNG" width="625">
+
+# Example logged data presentation
 I highly recommend using grafana to create graphs.
-<img src="screenshots/grafana.PNG" width="600">
+<img src="screenshots/grafana.PNG" width="625">
 
 ## Credits
 * [bartekn](https://github.com/bartekn) for initial idea.
