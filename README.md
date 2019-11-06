@@ -21,9 +21,33 @@ One of the best features of this script is the built-in implementation of [hyste
 The standard version only helps with +/- 1 level differences. This one is highly recommended for everybody to reduce speed and possible Air Purifier wear due to constant jumping between speed levels.
 There is also a more advanced/conservative version, which is turned on by default as well. This one prevents big speed jumps, when there is a possibility, that they are unwanted.
 
-### Examples
-- When going from level 1 to 14, there will be created an additional step at level 8, just to check if the pollution around purifier is still rising, or is it a fake alarm
+#### Examples
+- When going from level 1 to 14, there will be created an additional step at level 8, to check if the pollution around purifier is still rising, to make sure it’s not a false alarm.
 - When the device was running at a high level for a while, and this will be followed by a sudden drop in pollution. The speed of the purifier will at first drop in half, to make sure it’s not a false alarm.
+
+## Multi-device support
+Go to `devices.json` and add devices duplicating first entry, like this:
+```
+  {
+    "name": "",
+    "ip": "192.168.0.222",
+    "minSpeed": 0,
+    "maxSpeed": 14,
+    "hysteresisStack": [],
+    "debug": {}
+  },
+  {
+    "name": "",
+    "ip": "192.168.0.223",
+    "minSpeed": 0,
+    "maxSpeed": 14,
+    "hysteresisStack": [],
+    "debug": {}
+  }
+```
+#### Remember: 
+- Separate devices on a list with a comma, like in the example
+- Only first device on the list will be logging to database
 
 ## Unconditional speed boost
 If you feel that the device is temporary running too slow at all pm2.5 levels, you can enable this feature at any time, and set the preferred boost level.
