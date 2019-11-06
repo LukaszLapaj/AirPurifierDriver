@@ -30,11 +30,12 @@ async function init() {
         setInterval(() => getData(devices[id]), config.purifierUpdateFrequency * 1000);
         await sleep(6000);
     }
-}
 
-if (config.enableAirly) {
-    getAirlyData();
-    setInterval(() => getAirlyData(), config.airlyUpdateFrequency * 1000);
+
+    if (config.enableAirly) {
+        getAirlyData();
+        setInterval(() => getAirlyData(), config.airlyUpdateFrequency * 1000);
+    }
 }
 
 async function generateDayLevels(lowPollution, highPollution) {
@@ -129,7 +130,7 @@ async function generateNightLevels(lowPollution, highPollution) {
     nightLevels.reverse();
 }
 
-function printer(str, element) {
+async function printer(str, element) {
     if (element || element == 0)
         return " " + str + ": " + element;
     return "";
@@ -165,7 +166,7 @@ async function prettyPrint(debug) {
     let k = Object.keys(parameters);
     let v = Object.values(parameters);
     for (let i = 0; i < k.length; ++i) {
-        log += printer(k[i], debug[v[i]]);
+        log += await printer(k[i], debug[v[i]]);
     }
     console.log("{" + log + "}");
 }
@@ -197,56 +198,61 @@ async function checkForNight() {
 }
 
 async function saveLevel(purifier, nextLevel) {
-    let l = config.hysteresisLevel + 1;
+    let expectedStackLength = config.hysteresisLevel + 1;
     let hysteresisStack = purifier.hysteresisStack;
-    hysteresisStack[hysteresisStack.length] = nextLevel;
 
-    if (hysteresisStack.length > l) {
-        purifier.hysteresisStack = hysteresisStack.slice(hysteresisStack.length - l, hysteresisStack.length);
+    hysteresisStack[hysteresisStack.length] = nextLevel;
+    let currentStackLength = hysteresisStack.length;
+
+    if (currentStackLength > expectedStackLength) {
+        purifier.hysteresisStack = hysteresisStack.slice(currentStackLength - expectedStackLength, currentStackLength);
     }
 }
 
 async function hysteresis(nextLevel, debug, purifier) {
-    await saveLevel(purifier, nextLevel);
-    let hysteresisStack = purifier.hysteresisStack;
-
     debug.advancedHysteresisUp = null;
     debug.advancedHysteresisDown = null;
 
-    let length = hysteresisStack.length;
-    if (length < config.hysteresisLevel + 1) {
-        return hysteresisStack[length - 1];
+    await saveLevel(purifier, nextLevel);
+
+    let hysteresisStack = purifier.hysteresisStack;
+    let currentStackLength = hysteresisStack.length;
+    let expectedStackLength = config.hysteresisLevel + 1;
+
+    if (currentStackLength < expectedStackLength) {
+        return hysteresisStack[currentStackLength - 1];
     }
 
-    let currDiff = hysteresisStack[length - 2] - hysteresisStack[length - 1];
-    let absCurrDiff = Math.abs(currDiff);
+    let currentLevelDifference = hysteresisStack[currentStackLength - 2] - hysteresisStack[currentStackLength - 1];
+    let absCurrentLevelDifference = Math.abs(currentLevelDifference);
 
-    let test = true;
+    let testForHysteresis = true;
     for (let i = config.hysteresisLevel; i > 1; --i) {
-        test = (hysteresisStack[length - i] == hysteresisStack[length - i - 1]) && test;
-        if (!test) {
+        let position = currentStackLength - i;
+        testForHysteresis = (hysteresisStack[position] === hysteresisStack[position - 1]) && testForHysteresis;
+        if (!testForHysteresis) {
             break;
         }
     }
-    debug.hysteresis = test;
+    debug.hysteresis = testForHysteresis;
 
-    if (test && absCurrDiff < 2) {
-        return hysteresisStack[length - 2];
+    if (testForHysteresis && absCurrentLevelDifference < 2) {
+        return hysteresisStack[currentStackLength - 2];
     }
 
-    if (test && config.advancedHysteresis && absCurrDiff >= 4) {
-        let currentHysteresis = Math.floor(absCurrDiff / 2);
-        let lastLevel = hysteresisStack[length - 2];
-        if (absCurrDiff > currDiff) {
-            debug.advancedHysteresisUp = (lastLevel + currentHysteresis);
-            return (lastLevel + currentHysteresis);
+    if (testForHysteresis && config.advancedHysteresis && absCurrentLevelDifference > 3) {
+        let levelCorrection = Math.floor(absCurrentLevelDifference / 2);
+        let lastLevel = hysteresisStack[currentStackLength - 2];
+        if (absCurrentLevelDifference > currentLevelDifference) {
+            debug.advancedHysteresisUp = (lastLevel + levelCorrection);
+            return (lastLevel + levelCorrection);
         } else {
-            debug.advancedHysteresisDown = (lastLevel - currentHysteresis);
-            return (lastLevel - currentHysteresis);
+            debug.advancedHysteresisDown = (lastLevel - levelCorrection);
+            return (lastLevel - levelCorrection);
         }
     }
 
-    return hysteresisStack[length - 1];
+    return hysteresisStack[currentStackLength - 1];
 }
 
 async function getData(purifier) {
@@ -311,7 +317,7 @@ async function getData(purifier) {
             await purifier.device.led(1);
         }
     }
-    
+
     nextLevel = await hysteresis(nextLevel, debug, purifier);
 
     if (config.unconditionalBoost) {
@@ -353,7 +359,7 @@ async function getData(purifier) {
     purifier.debug = debug;
     await prettyPrint(purifier.debug);
 
-    if (purifier.mode == 'favorite') {
+    if (purifier.mode === 'favorite') {
         if (purifier.level != nextLevel) {
             try {
                 await purifier.device.setFavoriteLevel(nextLevel);
@@ -364,7 +370,7 @@ async function getData(purifier) {
     }
 
 
-    if (config.databaseLogging && purifier.id == 0) {
+    if (config.databaseLogging && purifier.id === 0) {
         let humidity = purifier.humidity, pm25 = purifier.pm25, mode = purifier.mode, level = purifier.level,
             temperature = purifier.temperature;
         let data = {date, temperature: temperature, humidity, pm25, mode, level: level};
@@ -373,7 +379,7 @@ async function getData(purifier) {
         } catch (e) {
             console.log("Database insert error");
         }
-        logState = !(config.lowerLoggingFrequency && logState == true);
+        logState = !(config.lowerLoggingFrequency && logState === true);
     }
     purifier.device.destroy();
 }
