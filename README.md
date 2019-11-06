@@ -2,6 +2,7 @@
 An improved driver for Xiaomi Air Purifier 2/2S automation.
 
 # Features:
+- Multi-device support
 - Hysteresis
 - Force turn on / favourite mode
 - Display settings
@@ -47,17 +48,17 @@ When the speed will rise by `preventHighTemperatureMultiplier` levels, the purif
 
 This can be set separately for day and night with different settings.
 ```
-dayEnableCoolingDown: true
-dayCoolingDownThreshold: 26.5
-dayTempBetweenLevels: 0.6
-preventHighTemperature: true
-preventHighTemperatureMultiplier: 5
+"dayEnableCoolingDown": true
+"dayCoolingDownThreshold": 26.5
+"dayTempBetweenLevels": 0.6
+"preventHighTemperature": true
+"preventHighTemperatureMultiplier": 5
 ```
 
 ```
-nightEnableCoolingDown: true
-nightCoolingDownThreshold: 27.0
-nightTempBetweenLevels: 0.4
+"nightEnableCoolingDown": true
+"nightCoolingDownThreshold": 27.0
+"nightTempBetweenLevels": 0.4
 ```
 
 ## Low/Critical humidity warning
@@ -65,12 +66,19 @@ Carbon purifier filters tend to accumulate some moisture and decrease room humid
 This setting will allow sacrificing air quality to save some moisture at extremely low levels.
 At `lowHumidityThreshold` purifier will slow down by 1 level, and below criticalHumidityThreshold, the device will stay on level 0.
 ```
-preventLowHumidity: true
-lowHumidityThreshold: 30
-criticalHumidityThreshold: 28
+"preventLowHumidity": true
+"lowHumidityThreshold": 30
+"criticalHumidityThreshold": 28
 ```
 ## Day / night mode
-AirPurifierDriver allows you to set different speeds at certain pollution separately for day and night.
+AirPurifierDriver allows you to set different speeds at certain pollution level separately for day and night.
+With night mode is turned on, purifier display will be turned off, until pollution level is below `criticalPM25Display`.
+Relevant variables:
+```
+"enableNightMode": true
+"disableLedAtNight": true
+"criticalPM25Display": 25
+```
 
 # Requirements
 - Postgres SQL Server
@@ -84,21 +92,21 @@ npm install
 ```
 
 # Configuration
-Go to `app.mjs` and set necessary flags:
+Go to `devices.json` and `config.json` and set necessary information:
 ```
-airPurifierIP = 'AIR PURIFIER IP ADDRESS';
+"ip": "AIR PURIFIER IP ADDRESS";
 ```
 If You want to use Airly measurements:
 ```
-airlyApiKey = "AIRLY API KEY";
-latitude = "LATITUDE";
-longitude = "LONGITUDE";
+"airlyApiKey": "AIRLY API KEY";
+"latitude": "LATITUDE";
+"longitude": "LONGITUDE";
 ```
 Or disable it by setting:
 ```
-enableAirly = false;
+"enableAirly": false;
 ```
-Setup database connection `db.mjs`. All necessary fields will be created automatically.
+Set up database connection `db.mjs`. All the necessary fields will be created automatically.
 ```
 const host = "localhost";
 const port = "5432";
@@ -111,7 +119,7 @@ If You won't be using database, remove this import in `app.mjs` and set logging 
 import * as db from './db.mjs';
 ```
 ```
-databaseLogging = false;
+"databaseLogging": false
 ```
 
 # Running the driver
