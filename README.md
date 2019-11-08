@@ -107,20 +107,21 @@ Relevant variables:
 # Requirements
 - Postgres SQL Server
 - Node.js 12.1+
-- Yarn
 
 # Install
 ```
 git clone -b master https://github.com/LukaszLapaj/AirPurifierDriver.git
+npm install yarn -g
 yarn install
 npm install
 ```
 
 # Configuration
-Go to `devices.json` and `config.json` and set necessary information:
+Go to `devices.json` and set necessary information:
 ```
 "ip": "AIR PURIFIER IP ADDRESS";
 ```
+Go to `config.json` and set necessary information:
 If You want to use Airly measurements:
 ```
 "airlyApiKey": "AIRLY API KEY";
@@ -131,7 +132,7 @@ Or disable it by setting:
 ```
 "enableAirly": false;
 ```
-Set up database connection `db.mjs`. All the necessary fields will be created automatically.
+Go to `db.mjs` and set up database connection. All the necessary fields in database will be created automatically.
 ```
 const host = "localhost";
 const port = "5432";
@@ -150,7 +151,7 @@ import * as db from './db.mjs';
 # Running the driver
 Start your database server, then application:
 ```
-nodejs --experimental-modules index.mjs
+node --experimental-modules index.mjs
 ```
 
 # Example output
