@@ -1,10 +1,24 @@
 {
   "name": "AirPurifierDriver",
-  "version": "5.0.1",
-  "private": true,
-  "main": "index.js",
-  "author": "Lukasz Lapaj",
   "license": "MIT",
+  "version": "5.0.1",
+  "author": "Łukasz Łapaj (lukaszlapaj.github.io)",
+  "main": "index.js",
+  "description": "An improved driver for Xiaomi Air Purifier 2/2S automation",
+  "homepage": "https://github.com/LukaszLapaj/AirPurifierDriver/blob/master/README.md",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/LukaszLapaj/AirPurifierDriver.git#master"
+  },
+  "keywords": [
+    "xiaomi",
+    "mi",
+    "miio",
+    "purifier"
+  ],
+  "engines": {
+    "node": ">=12.1.0"
+  },
   "dependencies": {
     "axios": "^0.19.0",
     "gulp": "^4.0.2",

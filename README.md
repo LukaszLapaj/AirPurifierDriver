@@ -155,11 +155,11 @@ node --experimental-modules index.mjs
 ```
 
 # Example output
-<img src="screenshots/console.PNG" width="625">
+<img src="screenshots/console.PNG" width="850">
 
 # Example logged data presentation
 I highly recommend using grafana to create graphs.
-<img src="screenshots/grafana.PNG" width="625">
+<img src="screenshots/grafana.PNG" width="850">
 
 ## Credits
 * [bartekn](https://github.com/bartekn) for initial idea.
