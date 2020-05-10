@@ -90,4 +90,3 @@ bin/*
 node_modules/*
 *.bat
 *.vbs
-*.json
