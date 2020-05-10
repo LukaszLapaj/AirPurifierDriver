@@ -106,13 +106,11 @@ Relevant variables:
 
 # Requirements
 - Postgres SQL Server
-- Node.js 12.1+
+- Node.js 13.1+
 
 # Install
 ```
 git clone -b master https://github.com/LukaszLapaj/AirPurifierDriver.git
-npm install yarn -g
-yarn install
 npm install
 ```
 
@@ -151,7 +149,7 @@ import * as db from './db.mjs';
 # Running the driver
 Start your database server, then application:
 ```
-node --experimental-modules index.mjs
+node --experimental-modules --experimental-json-modules index.mjs
 ```
 
 # Example output
