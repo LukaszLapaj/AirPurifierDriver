@@ -23,7 +23,7 @@
   "dependencies": {
     "axios": "^0.19.2",
     "gulp": "^4.0.2",
-    "lodash": "^4.17.15",
+    "lodash": "^4.17.19",
     "miio": "git+https://github.com/LukaszLapaj/miio.git#master",
     "moment": "^2.25.3",
     "pg": "^7.18.2",
