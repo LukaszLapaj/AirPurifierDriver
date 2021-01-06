@@ -21,7 +21,7 @@
     "node": ">=13.1.0"
   },
   "dependencies": {
-    "axios": "^0.19.2",
+    "axios": "^0.21.1",
     "gulp": "^4.0.2",
     "lodash": "^4.17.15",
     "miio": "git+https://github.com/LukaszLapaj/miio.git#master",
