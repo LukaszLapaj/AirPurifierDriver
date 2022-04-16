@@ -31,6 +31,7 @@ Go to `devices.json` and add devices duplicating first entry, like this:
   {
     "name": "",
     "ip": "192.168.0.222",
+    "token": "123",
     "minSpeed": 0,
     "maxSpeed": 14,
     "hysteresisStack": [],
@@ -39,6 +40,7 @@ Go to `devices.json` and add devices duplicating first entry, like this:
   {
     "name": "",
     "ip": "192.168.0.223",
+    "token": "456",
     "minSpeed": 0,
     "maxSpeed": 14,
     "hysteresisStack": [],
@@ -149,7 +151,7 @@ import * as db from './db.mjs';
 # Running the driver
 Start your database server, then application:
 ```
-node --experimental-modules --experimental-json-modules index.mjs
+npm run start
 ```
 
 # Example output
