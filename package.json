@@ -1,7 +1,7 @@
 {
-  "name": "AirPurifierDriver",
+  "name": "air-purifier-driver",
   "license": "MIT",
-  "version": "5.0.2",
+  "version": "5.1.0",
   "author": "Łukasz Łapaj (lukaszlapaj.github.io)",
   "main": "index.js",
   "description": "An improved driver for Xiaomi Air Purifier 2/2S automation",
@@ -18,16 +18,18 @@
     "purifier"
   ],
   "engines": {
-    "node": ">=13.1.0"
+    "node": ">=17.3.0"
+  },
+  "scripts": {
+    "start": "node --experimental-json-modules index.mjs"
   },
   "dependencies": {
-    "axios": "^0.19.2",
-    "gulp": "^4.0.2",
-    "lodash": "^4.17.15",
-    "miio": "git+https://github.com/LukaszLapaj/miio.git#master",
-    "moment": "^2.25.3",
+    "axios": "^0.26.1",
+    "lodash": "^4.17.21",
+    "miio": "^0.15.6",
+    "moment": "^2.29.2",
     "pg": "^7.18.2",
     "sequelize": "4.44.4",
-    "suncalc": "^1.8.0"
+    "suncalc": "^1.9.0"
   }
 }
