@@ -5,8 +5,7 @@
   "disableLed": false,
   "timesPerMinute": 5,
   "purifierUpdateFrequency": 12,
-  "databaseLogging": true,
-  "lowerLoggingFrequency": false,
+  "databaseLogging": false,
 
   "enableNightMode": true,
   "disableLedAtNight": true,

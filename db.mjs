@@ -8,7 +8,7 @@ const databaseName = "home";
 const login = "postgres";
 const password = "";
 
-try{
+try {
     sequelize = new Sequelize("postgresql://" + login + ":" + password + "@" + host + ":" + port + "/" + databaseName + "?ssl=false", {
         logging: false,
         idleTimeoutMillis: 10000
@@ -72,3 +72,18 @@ export const Airly = sequelize.define('airly', {
 });
 
 sequelize.sync();
+
+async function saveToDatabase(purifier, date) {
+    let humidity = purifier.humidity, pm25 = purifier.pm25, mode = purifier.mode, level = purifier.level,
+        temperature = purifier.temperature;
+    let data = {date, temperature: temperature, humidity, pm25, mode, level: level};
+    try {
+        await db.Air.create(data);
+    } catch (e) {
+        console.log("Database insert error");
+    }
+}
+
+export async function logData(purifier, date) {
+    await saveToDatabase(purifier, date);
+}
