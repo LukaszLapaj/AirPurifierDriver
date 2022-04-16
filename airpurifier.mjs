@@ -13,6 +13,8 @@ export async function connectDevice(purifier) {
     } catch (e) {
         console.log("Unable to connect device: " + purifier.id);
     }
+
+    return purifier;
 }
 
 export function getDeviceData(purifier, debug) {

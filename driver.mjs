@@ -56,7 +56,8 @@ export async function hysteresis(nextLevel, debug, purifier, config) {
     return hysteresisStack[currentStackLength - 1];
 }
 
-export async function determineNextSpeedLevel(debug, purifier, nextLevel, config, dayLevels, nightLevels, isNight) {
+export async function determineNextSpeedLevel(debug, purifier, config, dayLevels, nightLevels, isNight) {
+    let nextLevel = 0;
     if (isNight && config.enableNightMode) {
         debug.nightMode = isNight;
         for (let key in nightLevels) {
@@ -100,9 +101,6 @@ export async function determineNextSpeedLevel(debug, purifier, nextLevel, config
                 debug.dayEnableCoolingDownSpeed = speed;
             }
         }
-        if (config.disableLedAtNight && purifier.led != true) {
-            await purifier.device.led(1);
-        }
     }
 
     nextLevel = await hysteresis(nextLevel, debug, purifier, config);
@@ -127,19 +125,5 @@ export async function determineNextSpeedLevel(debug, purifier, nextLevel, config
         debug.criticalHumidityThreshold = config.preventLowHumidity;
     }
 
-    if (config.forceTurnOn && !purifier.power) {
-        await purifier.device.power(1);
-        purifier.device.power = await purifier.device.power();
-    }
-
-    if ((config.overridePurifierMode && purifier.mode != 'favorite') || config.ifTurnedOnOverridePurifierMode && purifier.power) {
-        try {
-            await purifier.device.mode('favorite');
-            purifier.mode = await purifier.device.mode();
-            config.overridePurifierMode ? debug.overridePurifierMode = config.overridePurifierMode : debug.ifTurnedOnOverridePurifierMode = config.ifTurnedOnOverridePurifierMode;
-        } catch (e) {
-            console.log(e);
-        }
-    }
     return nextLevel;
 }

@@ -2,7 +2,7 @@ import axios from "axios";
 import _ from "lodash";
 import * as db from "./db.mjs";
 
-export async function getAirlyData(logging) {
+export async function getAirlyData(logToDatabase) {
     try {
         let airlyData = await axios.get(
             "https://airapi.airly.eu/v2/measurements/point?" + "lat=" + config.latitude.toString() + "&lng=" + config.longitude.toString(),
@@ -25,7 +25,7 @@ export async function getAirlyData(logging) {
 
             let data = {date, temperature, humidity, pressure, pm25, pm10, pm1};
 
-            if (config.databaseLogging) {
+            if (logToDatabase) {
                 try {
                     await db.Airly.create(data);
                 } catch (e) {

@@ -26,26 +26,44 @@ async function init() {
         await sleep(6000);
     }
 
-
     if (config.enableAirly) {
         await getAirlyData(config.databaseLogging);
-        setInterval(() => getAirlyData(), config.airlyUpdateFrequency * 1000);
+        setInterval(() => getAirlyData(config.databaseLogging), config.airlyUpdateFrequency * 1000);
     }
 }
 
 async function getData(purifier, dayLevels, nightLevels) {
-    let nextLevel = 0;
     let debug = {};
 
     const date = new Date();
-    let isNight = await checkForNight(config);
+    let isNight = await checkForNight(config.locationBased, config.dayStart, config.dayEnd, config.latitude, config.longitude);
 
-    await connectDevice(purifier);
+    purifier = await connectDevice(purifier);
     getDeviceData(purifier, debug);
 
     debug.time = date.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false});
 
-    nextLevel = await determineNextSpeedLevel(debug, purifier, nextLevel, config, dayLevels, nightLevels, isNight);
+    let nextLevel = await determineNextSpeedLevel(debug, purifier, config, dayLevels, nightLevels, isNight);
+
+    if (isNight && config.enableNightMode && config.disableLedAtNight && purifier.led != true) {
+        await purifier.device.led(1);
+    }
+
+    if (config.forceTurnOn && !purifier.power) {
+        await purifier.device.power(1);
+        purifier.device.power = await purifier.device.power();
+    }
+
+    if ((config.overridePurifierMode && purifier.mode != 'favorite') || config.ifTurnedOnOverridePurifierMode && purifier.power) {
+        try {
+            await purifier.device.mode('favorite');
+            purifier.mode = await purifier.device.mode();
+            config.overridePurifierMode ? debug.overridePurifierMode = config.overridePurifierMode : debug.ifTurnedOnOverridePurifierMode = config.ifTurnedOnOverridePurifierMode;
+        } catch (e) {
+            console.log(e);
+        }
+    }
+
     debug.level = nextLevel;
 
     purifier.debug = debug;
