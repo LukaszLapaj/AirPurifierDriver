@@ -72,15 +72,6 @@ export async function determineNextSpeedLevel(debug, purifier, config, dayLevels
             nextLevel += speed;
             debug.nightEnableCoolingDownSpeed = speed;
         }
-        if (config.disableLedAtNight && purifier.led) {
-            if (purifier.pm25 >= config.criticalPM25Display && config.criticalLevelDisplay) {
-                await purifier.device.led(1);
-                debug.criticalLevelDisplay = config.criticalLevelDisplay;
-            } else {
-                await purifier.device.led(0);
-                debug.disableLedAtNight = config.disableLedAtNight;
-            }
-        }
     } else {
         for (let key in dayLevels) {
             if (purifier.pm25 >= dayLevels[key].pm25) {

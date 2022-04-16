@@ -45,8 +45,20 @@ async function getData(purifier, dayLevels, nightLevels) {
 
     let nextLevel = await determineNextSpeedLevel(debug, purifier, config, dayLevels, nightLevels, isNight);
 
-    if (isNight && config.enableNightMode && config.disableLedAtNight && purifier.led != true) {
-        await purifier.device.led(1);
+    if (isNight && config.enableNightMode) {
+        if (config.disableLedAtNight && purifier.led) {
+            if (purifier.pm25 >= config.criticalPM25Display && config.criticalLevelDisplay) {
+                await purifier.device.led(1);
+                debug.criticalLevelDisplay = config.criticalLevelDisplay;
+            } else {
+                await purifier.device.led(0);
+                debug.disableLedAtNight = config.disableLedAtNight;
+            }
+        }
+    } else {
+        if (config.disableLedAtNight && purifier.led != true) {
+            await purifier.device.led(1);
+        }
     }
 
     if (config.forceTurnOn && !purifier.power) {
