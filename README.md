@@ -120,6 +120,7 @@ npm install
 Go to `devices.json` and set necessary information:
 ```
 "ip": "AIR PURIFIER IP ADDRESS";
+"token" "AIR PURIFIER ACCESS TOKEN"
 ```
 Go to `config.json` and set necessary information:
 If You want to use Airly measurements:
