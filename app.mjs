@@ -27,8 +27,8 @@ async function init() {
     }
 
     if (config.enableAirly) {
-        await getAirlyData(config.databaseLogging);
-        setInterval(() => getAirlyData(config.databaseLogging), config.airlyUpdateFrequency * 1000);
+        await getAirlyData(config.databaseLogging, config.airlyApiKey, config.latitude, config.longitude);
+        setInterval(async () => await getAirlyData(config.databaseLogging, config.airlyApiKey, config.latitude, config.longitude), config.airlyUpdateFrequency * 1000);
     }
 }
 
@@ -94,4 +94,3 @@ async function getData(purifier, dayLevels, nightLevels) {
     }
     purifier.device.destroy();
 }
-

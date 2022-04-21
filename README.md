@@ -108,7 +108,7 @@ Relevant variables:
 
 # Requirements
 - Postgres SQL Server
-- Node.js 13.1+
+- Node.js 18+
 
 # Install
 ```

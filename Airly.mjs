@@ -1,18 +1,33 @@
-import axios from "axios";
 import _ from "lodash";
 import * as db from "./db.mjs";
 
-export async function getAirlyData(logToDatabase) {
-    try {
-        let airlyData = await axios.get(
-            "https://airapi.airly.eu/v2/measurements/point?" + "lat=" + config.latitude.toString() + "&lng=" + config.longitude.toString(),
-            {headers: {'apikey': config.airlyApiKey}, timeout: 1500},
-        );
-        try {
-            let fromDateTime = new Date(airlyData.data.current.fromDateTime);
-            let tillDateTime = new Date(airlyData.data.current.fromDateTime);
+async function fetchWithTimeout(resource, options = {}) {
+    const {timeout = 1500} = options;
 
-            let values = airlyData.data.current.values;
+    const controller = new AbortController();
+    const id = setTimeout(() => controller.abort(), timeout);
+    const response = await fetch(resource, {
+        ...options,
+        signal: controller.signal
+    });
+    clearTimeout(id);
+    return response;
+}
+
+export async function getAirlyData(logToDatabase, airlyApiKey, latitude, longitude) {
+    try {
+        const airlyResponse = await fetchWithTimeout("https://airapi.airly.eu/v2/measurements/point?" + "lat=" + latitude.toString() + "&lng=" + longitude.toString(), {
+            method: 'GET',
+            headers: {
+                'apikey': airlyApiKey
+            }
+        })
+        const airlyData = await airlyResponse.json();
+        try {
+            let fromDateTime = new Date(airlyData.current.fromDateTime);
+            let tillDateTime = new Date(airlyData.current.fromDateTime);
+
+            let values = airlyData.current.values;
 
             const date = new Date();
 

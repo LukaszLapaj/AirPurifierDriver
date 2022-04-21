@@ -18,13 +18,12 @@
     "purifier"
   ],
   "engines": {
-    "node": ">=17.3.0"
+    "node": ">=18.0.0"
   },
   "scripts": {
-    "start": "node --experimental-json-modules index.mjs"
+    "start": "node --experimental-fetch --experimental-json-modules index.mjs"
   },
   "dependencies": {
-    "axios": "^0.26.1",
     "lodash": "^4.17.21",
     "miio": "^0.15.6",
     "moment": "^2.29.2",
