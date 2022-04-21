@@ -10,9 +10,9 @@ async function saveLevel(purifier, nextLevel, hysteresisLevel) {
     }
 }
 
-export async function hysteresis(nextLevel, debug, purifier, config) {
-    debug.advancedHysteresisUp = null;
-    debug.advancedHysteresisDown = null;
+export async function hysteresis(nextLevel, purifier, config) {
+    purifier.state.advancedHysteresisUp = null;
+    purifier.state.advancedHysteresisDown = null;
 
     await saveLevel(purifier, nextLevel);
 
@@ -35,7 +35,7 @@ export async function hysteresis(nextLevel, debug, purifier, config) {
             break;
         }
     }
-    debug.hysteresis = testForHysteresis;
+    purifier.state.hysteresis = testForHysteresis;
 
     if (testForHysteresis && absCurrentLevelDifference < 2) {
         return hysteresisStack[currentStackLength - 2];
@@ -45,10 +45,10 @@ export async function hysteresis(nextLevel, debug, purifier, config) {
         let levelCorrection = Math.floor(absCurrentLevelDifference / 2);
         let lastLevel = hysteresisStack[currentStackLength - 2];
         if (absCurrentLevelDifference > currentLevelDifference) {
-            debug.advancedHysteresisUp = (lastLevel + levelCorrection);
+            purifier.state.advancedHysteresisUp = (lastLevel + levelCorrection);
             return (lastLevel + levelCorrection);
         } else {
-            debug.advancedHysteresisDown = (lastLevel - levelCorrection);
+            purifier.state.advancedHysteresisDown = (lastLevel - levelCorrection);
             return (lastLevel - levelCorrection);
         }
     }
@@ -56,10 +56,10 @@ export async function hysteresis(nextLevel, debug, purifier, config) {
     return hysteresisStack[currentStackLength - 1];
 }
 
-export async function determineNextSpeedLevel(debug, purifier, config, dayLevels, nightLevels, isNight) {
+export async function determineNextSpeedLevel(purifier, config, dayLevels, nightLevels, isNight) {
     let nextLevel = 0;
     if (isNight && config.enableNightMode) {
-        debug.nightMode = isNight;
+        purifier.state.nightMode = isNight;
         for (let key in nightLevels) {
             if (purifier.pm25 >= nightLevels[key].pm25) {
                 nextLevel = nightLevels[key].level;
@@ -70,7 +70,7 @@ export async function determineNextSpeedLevel(debug, purifier, config, dayLevels
             let temperatureDifference = purifier.temperature - config.nightCoolingDownThreshold;
             let speed = Math.floor(1 + (temperatureDifference / config.nightTempBetweenLevels));
             nextLevel += speed;
-            debug.nightEnableCoolingDownSpeed = speed;
+            purifier.state.nightEnableCoolingDownSpeed = speed;
         }
     } else {
         for (let key in dayLevels) {
@@ -86,34 +86,34 @@ export async function determineNextSpeedLevel(debug, purifier, config, dayLevels
             if (speed > config.preventHighTemperatureMultiplier) {
                 await purifier.device.buzzer(1);
                 await purifier.device.buzzer(0);
-                debug.preventHighTemperature = config.preventHighTemperature;
-                debug.dayEnableCoolingDownSpeed = speed;
+                purifier.state.preventHighTemperature = config.preventHighTemperature;
+                purifier.state.dayEnableCoolingDownSpeed = speed;
             } else {
-                debug.dayEnableCoolingDownSpeed = speed;
+                purifier.state.dayEnableCoolingDownSpeed = speed;
             }
         }
     }
 
-    nextLevel = await hysteresis(nextLevel, debug, purifier, config);
+    nextLevel = await hysteresis(nextLevel, purifier, config);
 
     if (config.unconditionalBoost) {
         nextLevel += config.unconditionalBoostLevel;
-        debug.unconditionalBoostLevel = config.unconditionalBoostLevel;
+        purifier.state.unconditionalBoostLevel = config.unconditionalBoostLevel;
     }
 
     if (config.preventLowHumidity && (purifier.humidity <= config.lowHumidityThreshold) && nextLevel >= 1) {
         nextLevel -= 1;
-        debug.preventLowHumidity = config.preventLowHumidity;
+        purifier.state.preventLowHumidity = config.preventLowHumidity;
     }
 
     if (config.preventLowTemperature && (purifier.temperature <= config.preventLowTemperatureThreshold)) {
         nextLevel = config.preventLowTemperatureSpeed;
-        debug.preventLowTemperature = config.preventLowTemperature;
+        purifier.state.preventLowTemperature = config.preventLowTemperature;
     }
 
     if (config.preventLowHumidity && (purifier.humidity <= config.criticalHumidityThreshold)) {
         nextLevel = 0;
-        debug.criticalHumidityThreshold = config.preventLowHumidity;
+        purifier.state.criticalHumidityThreshold = config.preventLowHumidity;
     }
 
     return nextLevel;

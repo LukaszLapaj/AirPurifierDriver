@@ -33,26 +33,24 @@ async function init() {
 }
 
 async function getData(purifier, dayLevels, nightLevels) {
-    let debug = {};
+    purifier = await connectDevice(purifier);
+    await getDeviceData(purifier);
 
     const date = new Date();
     let isNight = await checkForNight(config.locationBased, config.dayStart, config.dayEnd, config.latitude, config.longitude);
 
-    purifier = await connectDevice(purifier);
-    getDeviceData(purifier, debug);
+    purifier.state.time = date.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false});
 
-    debug.time = date.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false});
-
-    let nextLevel = await determineNextSpeedLevel(debug, purifier, config, dayLevels, nightLevels, isNight);
+    let nextLevel = await determineNextSpeedLevel(purifier, config, dayLevels, nightLevels, isNight);
 
     if (isNight && config.enableNightMode) {
         if (config.disableLedAtNight && purifier.led) {
             if (purifier.pm25 >= config.criticalPM25Display && config.criticalLevelDisplay) {
                 await purifier.device.led(1);
-                debug.criticalLevelDisplay = config.criticalLevelDisplay;
+                purifier.state.criticalLevelDisplay = config.criticalLevelDisplay;
             } else {
                 await purifier.device.led(0);
-                debug.disableLedAtNight = config.disableLedAtNight;
+                purifier.state.disableLedAtNight = config.disableLedAtNight;
             }
         }
     } else {
@@ -70,16 +68,15 @@ async function getData(purifier, dayLevels, nightLevels) {
         try {
             await purifier.device.mode('favorite');
             purifier.mode = await purifier.device.mode();
-            config.overridePurifierMode ? debug.overridePurifierMode = config.overridePurifierMode : debug.ifTurnedOnOverridePurifierMode = config.ifTurnedOnOverridePurifierMode;
+            config.overridePurifierMode ? purifier.state.overridePurifierMode = config.overridePurifierMode : purifier.state.ifTurnedOnOverridePurifierMode = config.ifTurnedOnOverridePurifierMode;
         } catch (e) {
             console.log(e);
         }
     }
 
-    debug.level = nextLevel;
+    purifier.state.level = nextLevel;
 
-    purifier.debug = debug;
-    await prettyPrint(purifier.debug);
+    await prettyPrint(purifier.state);
 
     if (purifier.mode === 'favorite' & purifier.level != nextLevel) {
         try {

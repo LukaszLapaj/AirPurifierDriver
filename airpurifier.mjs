@@ -17,10 +17,10 @@ export async function connectDevice(purifier) {
     return purifier;
 }
 
-export function getDeviceData(purifier, debug) {
-    purifier.power ? debug.mode = purifier.mode : debug.power = purifier.power;
-    debug.deviceId = purifier.id;
-    debug.pm25 = purifier.pm25.toLocaleString([], {minimumIntegerDigits: 3});
-    debug.humidity = purifier.humidity;
-    debug.temperature = purifier.temperature;
+export async function getDeviceData(purifier) {
+    purifier.power ? purifier.state.mode = purifier.mode : purifier.state.power = purifier.power;
+    purifier.state.deviceId = purifier.id;
+    purifier.state.pm25 = purifier.pm25.toLocaleString([], {minimumIntegerDigits: 3});
+    purifier.state.humidity = purifier.humidity;
+    purifier.state.temperature = purifier.temperature;
 }
