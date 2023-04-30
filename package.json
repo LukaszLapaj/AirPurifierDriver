@@ -26,7 +26,7 @@
   "dependencies": {
     "lodash": "^4.17.21",
     "miio": "^0.15.6",
-    "moment": "^2.29.2",
+    "moment": "^2.29.4",
     "pg": "^7.18.2",
     "sequelize": "4.44.4",
     "suncalc": "^1.9.0"
